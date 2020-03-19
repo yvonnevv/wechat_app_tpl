@@ -15,6 +15,8 @@ const {
     nowfsid,
     generatePWD
 } = require('../service/baidupan');
+const { WECHAT_CONFIG } = require('../service/config');
+const { replaceName, appName } = WECHAT_CONFIG;
 
 async function __deleteMovie(name) {
     await Movies.remove({ name });
@@ -35,14 +37,14 @@ function __addMovie({
     newMovie.save();
 }
 
-async function crawlAndSave(keyword) {
-    let localMovies = [];
-    const shareLinks = await startCrawl(keyword);
-    let filelist = [], dirs = [], share_list = [];
+async function transferAndSave(crawlShareLinks) {
+    const sharefilelist = [], renamelist = [];
 
-    await Promise.all(shareLinks.map(async ({
-        shareLink, name
+    // 转存前期工作
+    await Promise.all(crawlShareLinks.map(async ({
+        shareLink, name, desc
     }) => {
+        // 短链
         const surlArr = shareLink.split('/s/');
         const surl = surlArr[1];
         const shortSurl = surl.substring(1);
@@ -51,106 +53,73 @@ async function crawlAndSave(keyword) {
             surl: shortSurl
         });
 
-        const { randsk } = JSON.parse(verifyResult.body);
-        const infoResult = await shorturlinfo({
+        const { randsk } = verifyResult;
+        const shareInfoResult = await shorturlinfo({
             shorturl: surl, spd: randsk
         });
 
-        const { shareid, uk } = JSON.parse(infoResult.body);
-        const listResult = await sharelist({
-            shareid, shorturl: shortSurl, sekey: randsk
-        });
+        const { shareid, uk } = shareInfoResult;
+        const sharelistResult = await sharelist({shareid, shorturl: shortSurl, sekey: randsk});
+        const { list = {} } = sharelistResult;
+        const { fs_id, path, server_filename } = list[0];
 
-        const { title, list } = JSON.parse(listResult.body);
-        console.log('listResult.body', listResult.body);
-        
-        // 这个title就是名字
-        const fsidlist = [];
-        list.forEach(item => {
-            fsidlist.push(+item.fs_id);
-        });
-        const transferResult = await transfer({
-            shareid,
-            from: uk,
-            sekey: randsk,
-            fsidlist: JSON.stringify(fsidlist)
-        });
-        const { errno, info } = JSON.parse(transferResult.body);
-        if (!errno) {
-            // 转存成功之后获取当前的fsid
-            const titleArr = title.split('/');
-            nowfsid(encodeURIComponent(titleArr[titleArr.length - 1])).then(res => {
-                const { list } = JSON.parse(res.body);
-                list.forEach(item => {
-                    share_list.push({
-                        name,
-                        fs_id: item.fs_id
-                    });
-                })
-            });
-            info.forEach((iItem) => {
-                const { path } = iItem;
-                const fileName = path.substring(1);
-                dirs.push(`/fortune${path}`);
-                filelist.push({
-                    path: `/fortune${path}`,
-                    newname: fileName.replace('新剧分享', '来个电影')
-                });
-            });
-        } else {
-            ctx.body = {
-                retcode: 1,
-                result: {
-                    localMovies
-                }
-            };
-            return;
-        }
-    }));
+        // 要依次转存
+        const transferResult = await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
+        // 获取转存后的文件fsid
+        const nowlistResult = await nowfsid(encodeURIComponent(server_filename));
+        const { list: nowList = [{}] } = nowlistResult;
 
-    await Promise.all(dirs.map(async dir => {
-        const dirInfo = await dirlist(encodeURIComponent(dir));
-        const { errno, list } = JSON.parse(dirInfo.body);
-        if (!errno) {
-            list.forEach(item => {
-                const { path, server_filename } = item;
-                filelist.push({
-                    path: path.replace('新剧分享', '来个电影'),
-                    newname: server_filename.replace('新剧分享', '来个电影')
-                });
-            });
-        }
-    })); 
-    
-    // 这里可能要分两步重命名
-    await rename({
-        filelist: JSON.stringify(filelist)
-    });
-
-    // 每个文件都单独分享
-    await Promise.all(share_list.map(async item => {
-        const { name, fs_id } = item;
-        const namearr = name.split('][');
         const pwd = generatePWD();
-        const shareResult = await newshare({
-            fid_list: JSON.stringify([fs_id]),
-            pwd
-        });
-        console.log('shareResult', fs_id, pwd, JSON.parse(shareResult.body));
-        
-        const { shorturl } = JSON.parse(shareResult.body);
+        const shareResult = await newshare({fid_list: JSON.stringify([nowList[0].fs_id]), pwd});
+        const { shorturl } = shareResult;
         const movie = {
-            name: `${namearr[0]}][${namearr[1]}]`, 
+            name,
             shareUrl: shorturl,
             password: pwd,
-            keyword: namearr[2]
+            keyword: desc
         };
-        localMovies.push(movie);
+        renamelist.push({fs_id: nowList[0].fs_id, fs_path: nowList[0].path, server_filename});
+        sharefilelist.push(movie);
         __addMovie(movie);
     }));
 
-    return localMovies;
+    return { sharefilelist, renamelist };
 }
+
+async function renameFile(renamelist) {
+    // 要获取内部文件
+    const innerFilelist = [];
+    await Promise.all(renamelist.map(async (file = {}) => {
+        const f_dir = file.fs_path;
+        const n_name = file.server_filename.replace(replaceName, appName);
+
+        await rename({
+            filelist: JSON.stringify([{
+                path: f_dir,
+                newname: n_name
+            }])
+        });
+
+        // 拿里面的文件
+        const dirInfo = await dirlist(encodeURIComponent(f_dir.replace(replaceName, appName)));
+        const { errno, list } = dirInfo;
+        if (!errno) {
+            list.forEach(item => {
+                const { path, server_filename } = item;
+                innerFilelist.push({
+                    path,
+                    newname: server_filename.replace(replaceName, appName)
+                });
+            });
+        }
+    }));
+
+    await rename({
+        filelist: JSON.stringify(innerFilelist)
+    });
+}
+
+
 
 exports.getMovie = async (ctx, userMes) => {
     const keyword = userMes || ctx.request.query.keyword;
@@ -160,7 +129,10 @@ exports.getMovie = async (ctx, userMes) => {
     }).exec() || [];
 
     if (!localMovies.length) {
-        localMovies = await crawlAndSave(keyword);
+        const shareLinks = await startCrawl(keyword);
+        const { sharefilelist, renamelist } = await transferAndSave(shareLinks);
+        localMovies = sharefilelist;
+        renameFile(renamelist)
     };
 
     return {

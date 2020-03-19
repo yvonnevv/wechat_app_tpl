@@ -23,7 +23,13 @@ export async function verify({surl, pwd}) {
             referer: 'pan.baidu.com'
         }
     };
-    return await request(uri, options);    
+    let result = await request(uri, options);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('VERIFY FUNCTION ERROR: ', error);
+    }
 }
 
 /**
@@ -31,7 +37,13 @@ export async function verify({surl, pwd}) {
  */
 export async function shorturlinfo({shorturl, spd}) {
     const uri = `${PAN_API['shorturlinfo']}?access_token=${ACCESS_TOKEN}&shorturl=${shorturl}&spd=${spd}`;
-    return await request(uri);
+    let result = await request(uri);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('SHORTURL FUNCTION ERROR: ', error);
+    }
 }
 
 /**
@@ -40,7 +52,13 @@ export async function shorturlinfo({shorturl, spd}) {
  */
 export async function sharelist({shareid, shorturl, sekey}) {
     const uri = `${PAN_API['list']}?shareid=${shareid}&shorturl=${shorturl}&sekey=${sekey}&root=1`;
-    return await request(uri);
+    let result = await request(uri);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('SHARELIST FUNCTION ERROR: ', error);
+    }
 }
 
 /**
@@ -58,7 +76,13 @@ export async function transfer({shareid, from, sekey, fsidlist}) {
             referer: 'pan.baidu.com'
         }
     };
-    return await request(uri, options);
+    let result = await request(uri, options);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('TRANSFER FUNCTION ERROR: ', error);
+    }
 }
 
 /**
@@ -69,24 +93,41 @@ export async function rename({ filelist }) {
     const options = {
         method: 'POST',
         data: {
-            async: 2, // 0同步 2异步
+            async: 0, // 0同步 2异步
             filelist
         },
         headers: {
             referer: 'pan.baidu.com'
         }
     };
-    return await request(uri, options);
+    let result = await request(uri, options);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('RENAME FUNCTION ERROR: ', error);
+    }
 }
 
 /**
- * 查看文件fsid
+ * 查看文件夹fsid
  * @param {*} dir 
  */
-export function nowfsid(key) {
+export async function nowfsid(key) {
     const uri = `${PAN_API['search']}&access_token=${ACCESS_TOKEN}&dir=/fortune&key=${key}`;
-    return request(uri)
+    let result = await request(uri);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('NOWFSID FUNCTION ERROR: ', error);
+    }
 }
+
+/**
+ * 递归获取文件列表
+ * @param {*} dir 
+ */
 
 /**
  * 查看列表
@@ -94,7 +135,13 @@ export function nowfsid(key) {
  */
 export async function dirlist(dir) {
     const uri = `${PAN_API['filelist']}&access_token=${ACCESS_TOKEN}&dir=${dir}`;
-    return await request(uri);
+    let result = await request(uri);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('DIRLIST FUNCTION ERROR: ', error);
+    }
 }
 
 /**
@@ -118,7 +165,13 @@ export async function newshare({
             referer: 'pan.baidu.com'
         }
     };
-    return await request(uri, options);
+    let result = await request(uri, options);
+    try {
+        result = JSON.parse(result.body);
+        return result;
+    } catch (error) {
+        console.log('SHARE FUNCTION ERROR: ', error);
+    }
 }
 
 export function generatePWD() {

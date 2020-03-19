@@ -14,7 +14,6 @@ module.exports = function(){
 	});
 
 	router.post('/', async ctx => {
-		// await getMovie();
 		const result = await wechat.sendMes(ctx);
 		ctx.body = result;
 	})

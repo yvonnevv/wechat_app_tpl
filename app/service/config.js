@@ -48,5 +48,7 @@ exports.LETTERS = [
 exports.WECHAT_CONFIG = {
     appID: 'wx642da9106f4fbd07',
     appSecret: '713b0689af6154a5fefdb06ee7d52217',
-    token: 'laigedianying'
+    token: 'laigedianying',
+    appName: '来个电影',
+    replaceName: '新剧分享'
 };
