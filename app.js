@@ -4,14 +4,16 @@ const fs = require('fs')
 const path = require('path')
 const mongoose = require('mongoose')
 
-const db = 'mongodb://localhost/test'
+const db = 'mongodb://localhost/movies'
 
 /**
  * mongoose连接数据库
  * @type {[type]}
  */
 mongoose.Promise = require('bluebird')
-mongoose.connect(db)
+mongoose.connect(db, {
+  useMongoClient: true
+})
 
 /**
  * 获取数据库表对应的js对象所在的路径
@@ -48,13 +50,13 @@ require('babel-register')
 const Koa = require('koa')
 const logger = require('koa-logger')
 const session = require('koa-session')
-const bodyParser = require('koa-bodyparser')
+const xmlParser = require('koa-xml-body');
 const app = new Koa()
 
 app.keys = ['zhangivon']
 app.use(logger())
 app.use(session(app))
-app.use(bodyParser())
+app.use(xmlParser())
 
 
 /**
@@ -69,5 +71,5 @@ app
 
 
 
-app.listen(1234)
-console.log('app started at port 1234...');
+app.listen(8080)
+console.log('app started at port 8080...');

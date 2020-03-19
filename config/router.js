@@ -1,22 +1,28 @@
 'use strict'
 
 const Router = require('koa-router')
-const User = require('../app/controllers/user')
-const App = require('../app/controllers/app')
+const Movies = require('../app/controllers/movies')
+const Wechat = require('../app/service/wechat');
 
 module.exports = function(){
-	var router = new Router({
-    prefix: '/api'
-  })
+	const router = new Router();
+	const wechat = new Wechat();
 
-  // user
-  router.post('/u/signup', App.hasBody, User.signup)
-  router.post('/u/update', App.hasBody, App.hasToken, User.update)
+  	router.get('/', async ctx => {
+		const result = wechat.auth(ctx);
+		ctx.body = result;
+	});
 
-  // DB Interface test
-  router.get('/test/user/users',User.users)
-  router.post('/test/user/add',User.addUser)
-  router.post('/test/user/delete',User.deleteUser)
+	router.post('/', async ctx => {
+		// await getMovie();
+		const result = await wechat.sendMes(ctx);
+		ctx.body = result;
+	})
+	  
+	router.get('/api/movie', async ctx => {
+		const result  = await Movies.getMovie(ctx);
+		ctx.body = result;
+	});
 
-  return router
+	return router;
 }

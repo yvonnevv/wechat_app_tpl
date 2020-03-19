@@ -1,34 +1,39 @@
 {
-  "name": "koa-mongodb-server",
+  "name": "movies-server",
   "version": "1.0.0",
-  "description": "利用node+koa+mongoose搭建的后台服务，提供restful接口api",
+  "description": "",
   "main": "app.js",
   "scripts": {
+    "start": "nodemon app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
+    "movies",
     "koa",
     "node",
     "mongodb"
   ],
-  "author": "zhangivon",
+  "author": "Remixxx",
   "license": "MIT",
   "dependencies": {
+    "async-request": "^1.2.0",
     "babel-preset-env": "^1.4.0",
     "babel-register": "^6.24.1",
     "bluebird": "^3.5.0",
+    "cheerio": "^1.0.0-rc.3",
     "cloudinary": "^1.8.0",
     "koa": "^2.2.0",
     "koa-bodyparser": "^4.2.0",
     "koa-logger": "^2.0.1",
     "koa-router": "^7.1.1",
     "koa-session": "^5.0.0",
+    "koa-xml-body": "^2.1.0",
     "lodash": "^4.17.4",
     "mongoose": "^4.9.5",
-    "qiniu": "^6.1.13",
+    "nodemon": "^2.0.2",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.5",
     "sha1": "^1.1.1",
-    "speakeasy": "^2.0.0",
-    "uuid": "^3.0.1",
-    "xss": "^0.3.3"
+    "superagent": "^5.2.2"
   }
 }
