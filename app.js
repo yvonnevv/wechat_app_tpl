@@ -4,7 +4,7 @@ const fs = require('fs')
 const path = require('path')
 const mongoose = require('mongoose')
 
-const db = 'mongodb://localhost/movies'
+const db = 'mongodb://remixxx:a7121234@127.0.0.1:27017/movies'
 
 /**
  * mongoose连接数据库
@@ -53,7 +53,6 @@ const session = require('koa-session')
 const xmlParser = require('koa-xml-body');
 const app = new Koa()
 
-app.keys = ['zhangivon']
 app.use(logger())
 app.use(session(app))
 app.use(xmlParser())
