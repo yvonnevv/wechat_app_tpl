@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "dev": "NODE_ENV=development pm2 start app.json --watch",
-    "start": "NODE_ENV=production pm2 start app.json",
+    "start": "NODE_ENV=production pm2 start app.json --no-daemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
