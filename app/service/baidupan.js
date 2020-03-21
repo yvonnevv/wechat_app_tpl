@@ -158,7 +158,6 @@ export async function newshare({
             fid_list,
             schannel: 4,
             channel_list: JSON.stringify([]),
-            period: 7,
             pwd
         },
         headers: {

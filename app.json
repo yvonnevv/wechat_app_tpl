@@ -4,6 +4,6 @@
     "cwd"         : "./",  // 当前工作路径
     "error_file" : "./logs/app-err.log",  // 错误日志路径
     "out_file"   : "./logs/app-out.log",  // 普通日志路径
-    "ignore_watch" : ["logs"]
+    "ignore_watch" : ["*.log"]
   }
   

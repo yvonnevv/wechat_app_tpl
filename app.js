@@ -4,23 +4,54 @@ const fs = require('fs')
 const path = require('path')
 const mongoose = require('mongoose')
 
-const db = 'mongodb://remixxx:a7121234@127.0.0.1:27017/movies'
+const { ENV } = require('./app/service/config');
 
-/**
- * mongoose连接数据库
- * @type {[type]}
- */
-mongoose.Promise = require('bluebird')
-mongoose.connect(db, {
-  useMongoClient: true
-})
+const tunnel = require('tunnel-ssh');
+
+//===== db connection =====
+
+const dburi = 'mongodb://localhost:27017/movies'
+
+if (ENV === 'development') {
+  const config = {
+    username:'ec2-user',
+    host: '18.163.62.102',
+    privateKey: fs.readFileSync('/Users/chenxinyi/Desktop/wechat_app.pem'),
+    port: 22,
+    dstHost: 'localhost',
+    dstPort: 27017
+  };
+
+  tunnel(config, function (error, server) {
+    if(error){
+        console.log("SSH connection error: " + error);
+    }
+    /**
+     * mongoose连接数据库
+     * @type {[type]}
+     */
+    mongoose.Promise = require('bluebird')
+    mongoose.connect(dburi, {
+      useMongoClient: true
+    })
+
+    const db = mongoose.connection;
+    db.on('error', console.error.bind(console, 'DB connection error:'));
+    db.once('open', function() {
+        console.log("DB connection successful");
+    });
+  });
+} else {
+  mongoose.connect(dburi, {
+    useMongoClient: true
+  })
+}    
 
 /**
  * 获取数据库表对应的js对象所在的路径
  * @type {[type]}
  */
 const models_path = path.join(__dirname, '/app/models')
-
 
 /**
  * 已递归的形式，读取models文件夹下的js模型文件，并require

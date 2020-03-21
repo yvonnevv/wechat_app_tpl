@@ -22,7 +22,8 @@ exports.UA = [
     'Mozilla/5.0 (BB10; Kbd) AppleWebKit/537.35+ (KHTML, like Gecko) Version/10.3.3.2205 Mobile Safari/537.35+'
 ];
 
-exports.URL = 'http://520.58801hn.com/?s=';
+exports.URL = 'http://321.aiyule.top/?s=';
+// exports.URL_BACKUP = 
 
 exports.ACCESS_TOKEN = '123.b289d5a62c8a6c7b9584222d496346f9.YBIjdBXu15wwC0eq89fB_9LodXSe4H3QPvIXk8O.Jh506w';
 exports.SAVA_PATH = '/fortune';
@@ -52,3 +53,5 @@ exports.WECHAT_CONFIG = {
     appName: '来个电影',
     replaceName: '新剧分享'
 };
+
+exports.ENV = process.env.NODE_ENV;

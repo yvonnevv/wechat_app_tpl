@@ -31,10 +31,12 @@
     "koa-xml-body": "^2.1.0",
     "lodash": "^4.17.4",
     "mongoose": "^4.9.5",
+    "mongoose-ssh": "^0.1.0",
     "nodemon": "^2.0.2",
     "request": "^2.88.2",
     "request-promise": "^4.2.5",
     "sha1": "^1.1.1",
-    "superagent": "^5.2.2"
+    "superagent": "^5.2.2",
+    "tunnel-ssh": "^4.1.4"
   }
 }
