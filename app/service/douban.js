@@ -12,7 +12,7 @@ export function sleep(time) {
 };
 
 export async function requestDouban(page_limit, page_start) {
-    const uri = `https://movie.douban.com/j/search_subjects?type=movie&tag=%E7%83%AD%E9%97%A8&sort=recommend&page_limit=${page_limit}&page_start=${page_start}`
+    const uri = `https://movie.douban.com/j/search_subjects?type=movie&tag=%E8%B1%86%E7%93%A3%E9%AB%98%E5%88%86&sort=time&page_limit=${page_limit}&page_start=${page_start}`
     let result = await request(uri);
     try {
         result = JSON.parse(result.body);

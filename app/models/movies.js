@@ -7,7 +7,9 @@ const MoviesSchema = new Schema({
     name: String,
     shareUrl: String,
     password: String,
-    keyword: String
+    keyword: String,
+    // 用户不精准搜索的字段
+    userSearch: [String]
 });
 
 const Movies = mongoose.model('Movies', MoviesSchema);
