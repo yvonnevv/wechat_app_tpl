@@ -168,7 +168,7 @@ exports.testRename = async (ctx) => {
 
 exports.testIp = async (ctx) => {
     // 测试ip可用性
-    const { keyword } = ctx.query;
-    const docs = await __crawlContent(`${URL}${encodeURIComponent(keyword)}`, 'http://101.37.118.54:8888');
+    // const { ip } = ctx.query;
+    const docs = await __crawlContent(`${URL}${encodeURIComponent('异度侵入')}`, 'http://222.73.217.7:8080');
     console.log('docs==', docs);
 }

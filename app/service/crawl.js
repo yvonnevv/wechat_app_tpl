@@ -10,16 +10,18 @@ const userAgent = UA[Math.floor(Math.random() * UA.length)];
 async function __crawlContent(url, customIp) {
     let docs;
     if (ENV === 'development') {
-        const ip = customIp || IPS[Math.floor(Math.random() * IPS.length)];
+        // const ip = customIp || IPS[Math.floor(Math.random() * IPS.length)];
         docs = await superagent
-            .get(url)  
+            .get(url)
+            .redirects(2)
             .set({ 
                 'User-Agent': userAgent
             })
-            .proxy(ip);
+            // .proxy(ip);
     } else {
         docs = await superagent
-            .get(url)  
+            .get(url)
+            .redirects(2) 
             .set({ 
                 'User-Agent': userAgent
             });

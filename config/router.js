@@ -30,7 +30,7 @@ module.exports = function(){
 		};
 	});
 
-	router.get('/api/test', async ctx => {
+	router.get('/api/testip', async ctx => {
 		Movies.testIp(ctx);
 		ctx.body = {
 			retcode: 0

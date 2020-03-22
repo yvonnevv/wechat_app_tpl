@@ -25,15 +25,15 @@ if (ENV === 'development') {
   tunnel(config, function (error, server) {
     if(error){
         console.log("SSH connection error: " + error);
-    }
+    };
     /**
      * mongoose连接数据库
      * @type {[type]}
      */
-    mongoose.Promise = require('bluebird')
+    mongoose.Promise = require('bluebird');
     mongoose.connect(dburi, {
       useMongoClient: true
-    })
+    });
 
     const db = mongoose.connection;
     db.on('error', console.error.bind(console, 'DB connection error:'));
@@ -42,9 +42,10 @@ if (ENV === 'development') {
     });
   });
 } else {
+  mongoose.Promise = require('bluebird');
   mongoose.connect(dburi, {
     useMongoClient: true
-  })
+  });
 }    
 
 /**
