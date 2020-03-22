@@ -75,7 +75,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         let { errno, list: nowList = [{}] } = nowlistResult;
         // 这里加个重试逻辑
         if (errno) {
-            let parse_name = server_filename.match(/\[[\u4E00-\u9FA5A-Za-z0-9_-,，·：:~～\s\/]+\]/ig);
+            let parse_name = server_filename.match(/\[[\u4E00-\u9FA5A-Za-z0-9_\-\.|,，·：:~～\s\/]+\]/ig);
             parse_name = ~parse_name[1].indexOf('微信公众号') ? parse_name[0] : `${parse_name[0]}${parse_name[1]}`;
             nowlistResult = await nowfsid(encodeURIComponent(parse_name));
             nowList = nowlistResult.list || [{}];
@@ -154,18 +154,20 @@ async function getMovie(ctx, userMes) {
 
     if (!localMovies.length) {
         const shareLinks = await startCrawl(keyword);
-        // 查询一下数据库有没有
-        const { name } = shareLinks[0];
-        localMovies = await Movies.find({
-            name
-        }).exec() || [];
-        if (!localMovies.length) {
-            const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
-            localMovies = sharefilelist;
-            renameFile(renamelist);
-        } else {
-            __addUserSearch(name, keyword);
-        }
+        if (shareLinks.length) {
+            // 查询一下数据库有没有
+            const { name } = shareLinks[0];
+            localMovies = await Movies.find({  
+                name
+            }).exec() || [];
+            if (!localMovies.length) {
+                const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
+                localMovies = sharefilelist;
+                renameFile(renamelist);
+            } else {
+                __addUserSearch(name, keyword);
+            }
+        };
     };
 
     console.log(`!!!!! 获取${keyword}成功 !!!!!`);
@@ -179,12 +181,18 @@ async function getMovie(ctx, userMes) {
 exports.getMovie = getMovie;
 
 exports.autoGetMoives = async (ctx) => {
-    const result = await requestDouban(100, 0);  
+    const { tag, sort = 'recommend', page_limit = 100, page_start = 0 } = ctx.query;
+    const result = await requestDouban({
+        tag, sort, page_limit, page_start
+    });  
     for (let i = 0; i < result.length; i++) {
         let { title } = result[i];
         title = title.split('：')[0];
         console.log(`----- 准备获取${title} -----`);
-        getMovie(ctx, title);  
+        getMovie(ctx, title);
+        if (i === result.length - 1) {
+            console.log(`$$$$$ 任务完成 $$$$$`)
+        }
         await sleep(50000);     
     };
 }

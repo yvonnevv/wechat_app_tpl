@@ -22,7 +22,7 @@ module.exports = function(){
 		const result  = await Movies.getMovie(ctx);
 		ctx.body = result;
 	});
-
+  
 	router.get('/api/auto', async ctx => {
 		Movies.autoGetMoives(ctx);
 		ctx.body = {
