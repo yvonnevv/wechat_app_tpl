@@ -1,18 +1,31 @@
 'use strict';
 
 const superagent= require('superagent');
-const cheerio = require('cheerio');
+require('superagent-proxy')(superagent);
 
-const { UA, URL } = require('./config');
+const cheerio = require('cheerio');
+const { UA, URL, IPS, ENV } = require('./config');
 const userAgent = UA[Math.floor(Math.random() * UA.length)];
 
-async function __crawlContent(url) {
-    const docs = await superagent
-        .get(url)
-        .set({
-            'User-Agent': userAgent
-        });
-    return docs.text;
+async function __crawlContent(url, customIp) {
+    let docs;
+    if (ENV === 'development') {
+        const ip = customIp || IPS[Math.floor(Math.random() * IPS.length)];
+        docs = await superagent
+            .get(url)  
+            .set({ 
+                'User-Agent': userAgent
+            })
+            .proxy(ip);
+    } else {
+        docs = await superagent
+            .get(url)  
+            .set({ 
+                'User-Agent': userAgent
+            });
+    }
+    
+    return docs.text;  
 }
 
 function __parseName(name) {
@@ -30,6 +43,7 @@ export async function startCrawl(keyword) {
     const wrapperUrl = `${URL}${encodeURIComponent(keyword)}`
     const shareLinks = [];
     const docs = await __crawlContent(wrapperUrl);
+    // return;
     const $ = cheerio.load(docs);
     // 有无找到
     const isEmpty = $('h2:contains("未找到")');
@@ -81,4 +95,7 @@ export async function startCrawl(keyword) {
         return shareLinks;
     }
 }
+
+exports.__crawlContent = __crawlContent;
+
 

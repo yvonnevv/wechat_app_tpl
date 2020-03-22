@@ -2,8 +2,7 @@
 
 const mongoose =  require('mongoose');
 const Movies = mongoose.model('Movies');
-
-const { startCrawl } = require('../service/crawl');
+const { startCrawl, __crawlContent } = require('../service/crawl');
 const {
     verify,
     shorturlinfo,
@@ -15,8 +14,9 @@ const {
     nowfsid,
     generatePWD
 } = require('../service/baidupan');
-const { WECHAT_CONFIG } = require('../service/config');
+const { WECHAT_CONFIG, URL } = require('../service/config');
 const { replaceName, appName } = WECHAT_CONFIG;
+const { requestDouban, sleep } = require('../service/douban');
 
 async function __deleteMovie(name) {
     await Movies.remove({ name });
@@ -64,13 +64,19 @@ async function transferAndSave(crawlShareLinks) {
         const { fs_id, path, server_filename } = list[0];
 
         // 要依次转存
-        const transferResult = await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
+        await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
         // 获取转存后的文件fsid
-        const nowlistResult = await nowfsid(encodeURIComponent(server_filename));
-        const { list: nowList = [{}] } = nowlistResult;
-
+        let nowlistResult = await nowfsid(encodeURIComponent(server_filename));
+        let { errno, list: nowList = [{}] } = nowlistResult;
+        // 这里加个重试逻辑
+        if (errno) {
+            let parse_name = server_filename.match(/\[[\u4E00-\u9FA5A-Za-z0-9_\s\/]+\]/ig);
+            parse_name = `${parse_name[0]}${parse_name[1]}`;
+            nowlistResult = await nowfsid(encodeURIComponent(parse_name));
+            nowList = nowlistResult || [{}];
+        };
         const pwd = generatePWD();
-        const shareResult = await newshare({fid_list: JSON.stringify([nowList[0].fs_id]), pwd});
+        let shareResult = await newshare({fid_list: JSON.stringify([nowList[0].fs_id]), pwd});
         const { shorturl } = shareResult;
         const movie = {
             name,
@@ -119,9 +125,7 @@ async function renameFile(renamelist) {
     });
 }
 
-
-
-exports.getMovie = async (ctx, userMes) => {
+async function getMovie(ctx, userMes) {
     const keyword = userMes || ctx.request.query.keyword;
     const wordReg = new RegExp(keyword, 'i')
     let localMovies = await Movies.find({
@@ -132,11 +136,39 @@ exports.getMovie = async (ctx, userMes) => {
         const shareLinks = await startCrawl(keyword);
         const { sharefilelist, renamelist } = await transferAndSave(shareLinks);
         localMovies = sharefilelist;
-        renameFile(renamelist)
+        renameFile(renamelist);
     };
 
+    console.log(`!!!!! 获取${keyword}成功 !!!!!`);
+    
     return {
         retcode: 0,
         localMovies
     };
+}
+
+exports.getMovie = getMovie;
+
+exports.autoGetMoives = async (ctx) => {
+    const result = await requestDouban(100, 160);  
+    for (let i = 0; i < result.length; i++) {
+        let { title } = result[i];
+        title = title.split('：')[0];
+        console.log(`----- 准备获取${title} -----`);
+        getMovie(ctx, title);  
+        await sleep(40000);     
+    };
+}
+
+exports.testRename = async (ctx) => {
+    const { keyword } = ctx.query;
+    const listResult = await nowfsid(encodeURIComponent(keyword));
+    console.log('listResult', listResult);
+}
+
+exports.testIp = async (ctx) => {
+    // 测试ip可用性
+    const { keyword } = ctx.query;
+    const docs = await __crawlContent(`${URL}${encodeURIComponent(keyword)}`, 'http://101.37.118.54:8888');
+    console.log('docs==', docs);
 }
