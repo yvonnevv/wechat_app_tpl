@@ -17,8 +17,7 @@ async function __crawlContent(url, customIp) {
         docs = await request(url, {
             method: 'GET',
             headers: {
-                'User-Agent': userAgent,
-                'host': URL
+                'User-Agent': userAgent
             },
             // proxy: ip
         });
@@ -26,12 +25,10 @@ async function __crawlContent(url, customIp) {
         docs = await request(url, {
             method: 'GET',
             headers: {
-                'User-Agent': userAgent,
-                'host': URL
+                'User-Agent': userAgent
             }
         });
     }
-    
     return docs.body;  
 }
 

@@ -224,6 +224,6 @@ exports.testRename = async (ctx) => {
 exports.testIp = async (ctx) => {
     // 测试ip可用性
     // const { ip } = ctx.query;
-    const docs = await __crawlContent(`${URL}?s=${encodeURIComponent('异界')}`);
+    const docs = await __crawlContent(`${URL}?s=${encodeURIComponent('小妇人')}`);
     console.log('docs==', docs);
 }
