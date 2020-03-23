@@ -59,12 +59,12 @@ const models_path = path.join(__dirname, '/app/models')
  * @param  {[type]} modelPath [description]
  * @return {[type]}           [description]
  */
-var walk = function(modelPath) {
+const walk = function(modelPath) {
   fs
     .readdirSync(modelPath)
     .forEach(function(file) {
-      var filePath = path.join(modelPath, '/' + file)
-      var stat = fs.statSync(filePath)
+      const filePath = path.join(modelPath, '/' + file)
+      const stat = fs.statSync(filePath)
 
       if (stat.isFile()) {
         if (/(.*)\.(js|coffee)/.test(file)) {

@@ -1,33 +1,38 @@
 'use strict';
 
 const superagent= require('superagent');
-require('superagent-proxy')(superagent);
+// require('superagent-proxy')(superagent);
 
 const cheerio = require('cheerio');
 const { UA, URL, IPS, ENV } = require('./config');
 const userAgent = UA[Math.floor(Math.random() * UA.length)];
+const request = require('async-request');
 
 async function __crawlContent(url, customIp) {
     let docs;
+    console.log('url==', url);
+    
     if (ENV === 'development') {
         // const ip = customIp || IPS[Math.floor(Math.random() * IPS.length)];
-        docs = await superagent
-            .get(url)
-            .redirects(2)
-            .set({ 
-                'User-Agent': userAgent
-            })
-            // .proxy(ip);
+        docs = await request(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': userAgent,
+                'host': URL
+            },
+            // proxy: ip
+        });
     } else {
-        docs = await superagent
-            .get(url)
-            .redirects(2) 
-            .set({ 
-                'User-Agent': userAgent
-            });
+        docs = await request(url, {
+            method: 'GET',
+            headers: {
+                'User-Agent': userAgent,
+                'host': URL
+            }
+        });
     }
     
-    return docs.text;  
+    return docs.body;  
 }
 
 function __parseName(name) {
@@ -42,7 +47,7 @@ function __parseName(name) {
 }
 
 export async function startCrawl(keyword) {
-    const wrapperUrl = `${URL}${encodeURIComponent(keyword)}`
+    const wrapperUrl = `${URL}?s=${encodeURIComponent(keyword)}`;
     const shareLinks = [];
     const docs = await __crawlContent(wrapperUrl);
     // return;

@@ -41,6 +41,11 @@ function __addMovie({
     newMovie.save();
 }
 
+/**
+ * 转存
+ * @param {*} crawlShareLinks 
+ * @param {*} userSearch 
+ */
 async function transferAndSave(crawlShareLinks, userSearch) {
     const sharefilelist = [], renamelist = [];
 
@@ -66,22 +71,26 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         const { shareid, uk } = shareInfoResult;
         const sharelistResult = await sharelist({shareid, shorturl: shortSurl, sekey: randsk});
         const { list = {} } = sharelistResult;
-        const { fs_id, path, server_filename } = list[0];
+        const { fs_id, server_filename } = list[0];
 
         // 要依次转存
         await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
         // 获取转存后的文件fsid
         let nowlistResult = await nowfsid(encodeURIComponent(server_filename));
         let { errno, list: nowList = [{}] } = nowlistResult;
-        // 这里加个重试逻辑
+        // 获取重试逻辑
         if (errno) {
-            let parse_name = server_filename.match(/\[[\u4E00-\u9FA5A-Za-z0-9_\-\.|,，·：:~～\s\/]+\]/ig);
-            parse_name = ~parse_name[1].indexOf('微信公众号') ? parse_name[0] : `${parse_name[0]}${parse_name[1]}`;
+            let splitIdx = ~server_filename.indexOf('[ 微信公众号') 
+                ? server_filename.indexOf('[ 微信公众号')
+                : server_filename.indexOf('[微信公众号');
+            splitIdx = ~splitIdx ? splitIdx : server_filename.length;
+            let parse_name = server_filename.substring(0, splitIdx);
             nowlistResult = await nowfsid(encodeURIComponent(parse_name));
             nowList = nowlistResult.list || [{}];
         };
+        const { fs_id: cur_fs_id, path: fs_path } =  nowList[0] || {};
         const pwd = generatePWD();
-        let shareResult = await newshare({fid_list: JSON.stringify([nowList[0].fs_id]), pwd});
+        let shareResult = await newshare({fid_list: JSON.stringify([cur_fs_id]), pwd});
         const { shorturl } = shareResult;
         const movie = {
             name,
@@ -90,7 +99,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
             keyword: desc,
             userSearch: [userSearch]
         };
-        renamelist.push({fs_id: nowList[0].fs_id, fs_path: nowList[0].path, server_filename});
+        renamelist.push({fs_id: cur_fs_id, fs_path, server_filename});
         sharefilelist.push(movie);
         __addMovie(movie);
     }));
@@ -98,6 +107,10 @@ async function transferAndSave(crawlShareLinks, userSearch) {
     return { sharefilelist, renamelist };
 }
 
+/**
+ * 重命名
+ * @param {*} renamelist 
+ */
 async function renameFile(renamelist) {
     // 要获取内部文件
     const innerFilelist = [];
@@ -142,6 +155,11 @@ async function renameFile(renamelist) {
     });
 }
 
+/**
+ * 主逻辑
+ * @param {*} ctx 
+ * @param {*} userMes 
+ */
 async function getMovie(ctx, userMes) {
     const keyword = userMes || ctx.request.query.keyword;
     const wordReg = new RegExp(keyword, 'i')
@@ -206,6 +224,6 @@ exports.testRename = async (ctx) => {
 exports.testIp = async (ctx) => {
     // 测试ip可用性
     // const { ip } = ctx.query;
-    const docs = await __crawlContent(`${URL}${encodeURIComponent('异度侵入')}`, 'http://222.73.217.7:8080');
+    const docs = await __crawlContent(`${URL}?s=${encodeURIComponent('异界')}`);
     console.log('docs==', docs);
 }
