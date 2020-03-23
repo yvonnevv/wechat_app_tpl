@@ -51,7 +51,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
 
     // 转存前期工作
     await Promise.all(crawlShareLinks.map(async ({
-        shareLink, name, desc
+        shareLink, name, desc, pwd: iPwd = 'LXXH'
     }) => {
         // 短链
         if (!shareLink) return;
@@ -59,7 +59,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         const surl = surlArr[1];
         const shortSurl = surl.substring(1);
         const verifyResult = await verify({
-            pwd: 'LXXH',
+            pwd: iPwd,
             surl: shortSurl
         });
 
@@ -97,7 +97,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
             shareUrl: shorturl,
             password: pwd,
             keyword: desc,
-            userSearch: [userSearch]
+            userSearch: [userSearch || name]
         };
         renamelist.push({fs_id: cur_fs_id, fs_path, server_filename});
         sharefilelist.push(movie);
@@ -196,7 +196,21 @@ async function getMovie(ctx, userMes) {
     };
 }
 
-exports.getMovie = getMovie;
+/**
+ * 手动插入数据（postman）
+ * @param {*} ctx 
+ */
+exports.customInsert = async (ctx) => {
+    const { insertDoc = [] } = ctx.request.body;
+    const { sharefilelist, renamelist } = await transferAndSave(insertDoc);
+    console.log('sharefilelist==', sharefilelist);
+    
+    renameFile(renamelist);
+    return {
+        retcode: 0,
+        localMovies: sharefilelist
+    }
+}
 
 exports.autoGetMoives = async (ctx) => {
     const { tag, sort = 'recommend', page_limit = 100, page_start = 0 } = ctx.query;
@@ -223,7 +237,9 @@ exports.testRename = async (ctx) => {
 
 exports.testIp = async (ctx) => {
     // 测试ip可用性
-    // const { ip } = ctx.query;
-    const docs = await __crawlContent(`${URL}?s=${encodeURIComponent('小妇人')}`);
+    const { keyword } = ctx.query;
+    const docs = await __crawlContent(`${URL}?s=${encodeURIComponent(keyword)}`);
     console.log('docs==', docs);
 }
+
+exports.getMovie = getMovie;

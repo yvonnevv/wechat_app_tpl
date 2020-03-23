@@ -47,7 +47,7 @@ exports.WECHAT_CONFIG = {
     appSecret: '713b0689af6154a5fefdb06ee7d52217',
     token: 'laigedianying',
     appName: '来个电影',
-    replaceName: /新剧分享|爱电影分享/
+    replaceName: /新剧分享|爱电影分享|十点美剧|小宇看电影/
 };
 
 exports.ENV = process.env.NODE_ENV;

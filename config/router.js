@@ -17,6 +17,11 @@ module.exports = function(){
 		const result = await wechat.sendMes(ctx);
 		ctx.body = result;
 	})
+
+	router.post('/api/insert', async ctx => {
+		const result = await Movies.customInsert(ctx);
+		ctx.body = result;
+	})
 	  
 	router.get('/api/movie', async ctx => {
 		const result  = await Movies.getMovie(ctx);

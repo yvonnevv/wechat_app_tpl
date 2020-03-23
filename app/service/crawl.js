@@ -10,8 +10,6 @@ const request = require('async-request');
 
 async function __crawlContent(url, customIp) {
     let docs;
-    console.log('url==', url);
-    
     if (ENV === 'development') {
         // const ip = customIp || IPS[Math.floor(Math.random() * IPS.length)];
         docs = await request(url, {
