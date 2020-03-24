@@ -90,6 +90,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         };
         const { fs_id: cur_fs_id, path: fs_path } =  nowList[0] || {};
         const pwd = generatePWD();
+        if (!cur_fs_id) return;
         let shareResult = await newshare({fid_list: JSON.stringify([cur_fs_id]), pwd});
         const { shorturl } = shareResult;
         const movie = {
@@ -203,8 +204,7 @@ async function getMovie(ctx, userMes) {
 exports.customInsert = async (ctx) => {
     const { insertDoc = [] } = ctx.request.body;
     const { sharefilelist, renamelist } = await transferAndSave(insertDoc);
-    console.log('sharefilelist==', sharefilelist);
-    
+
     renameFile(renamelist);
     return {
         retcode: 0,
