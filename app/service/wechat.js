@@ -25,7 +25,7 @@ class Wechat {
 		return result === signature ? echostr : 'dismatch';
     }
 
-    async __sendMovie(userMes) {
+    async __sendMovie(userName, userMes) {
         let replyContent = '';
         const result = await Movies.getMovie(null, userMes);
         delete this.userInfoMap[userName];
@@ -96,7 +96,7 @@ class Wechat {
                     replyContent = await this.__customDel(userMesHandleType[1]);
                     break;
                 default:
-                    replyContent = await this.__sendMovie(userMes);
+                    replyContent = await this.__sendMovie(userName, userMes);
                     break;
             }
         }
