@@ -44,17 +44,17 @@ class Wechat {
         return replyContent;
     }
 
-    async __customAdd(userName, userMes) {
+    __customAdd(userName, userMes) {
         Supplement.add(userName, userMes);
         return '[GoForIt]已提交，小编会尽快处理！';
     }
 
     async __customDel(userMes) {
-        if (!/^http:\/\/pan\.baidu\.com\/s\/1/.test(userMes))
+        if (!/^http(s?):\/\/pan\.baidu\.com\/s\/1/.test(userMes))
             return '[OMG]请输入正确格式！'
-        const { retcode } = Movies.customDel(null, userMes);
+        const { retcode } = await Movies.customDel(null, userMes);
         switch(retcode) {
-            case 0:
+            case 2:
                 return '[OMG]已处理，请重新获取!';
             case 1:
                 return '[Doge]没有找到这个文件，请重新获取！';
@@ -90,13 +90,13 @@ class Wechat {
             const userMesHandleType = userMes.split('+');
             switch (userMesHandleType[0]) {
                 case '补录':
-                    replyContent = this.__customAdd(userMesHandleType[1]);
+                    replyContent = this.__customAdd(userName, userMesHandleType[1]);
                     break;
                 case '失效':
-                    replyContent = this.__customDel(userMesHandleType[1]);
+                    replyContent = await this.__customDel(userMesHandleType[1]);
                     break;
                 default:
-                    replyContent = this.__sendMovie(userMes);
+                    replyContent = await this.__sendMovie(userMes);
                     break;
             }
         }
