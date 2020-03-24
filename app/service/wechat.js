@@ -83,7 +83,7 @@ class Wechat {
         // console.log('userMes==', userMes);
         let replyContent = '';
         // let openId = 'omt5Q1Tp3gc-_Lu7-ko2vGBae0FM';
-        const userMesHandleType = userMes.split('+');
+        let userMesHandleType = userMes.split('+')[0].substring(0,2);
         switch (userMesHandleType[0]) {
             case '补录':
                 replyContent = this.__customAdd(userName, userMesHandleType[1]);
