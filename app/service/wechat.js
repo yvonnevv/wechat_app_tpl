@@ -1,7 +1,7 @@
 'use strict';
 const sha1 = require('sha1');
 const {
-	WECHAT_CONFIG
+    WECHAT_CONFIG
 } = require('./config');
 const Movies = require('../controllers/movies');
 const Supplement = require('../controllers/supplement');
@@ -9,7 +9,6 @@ const Supplement = require('../controllers/supplement');
 class Wechat {
     constructor() {
         this.token = WECHAT_CONFIG.token;
-        this.userInfoMap = {};
     }
 
     auth(ctx) {
@@ -25,10 +24,9 @@ class Wechat {
 		return result === signature ? echostr : 'dismatch';
     }
 
-    async __sendMovie(userName, userMes) {
+    async __sendMovie(userMes, userName) {
         let replyContent = '';
-        const result = await Movies.getMovie(null, userMes);
-        delete this.userInfoMap[userName];
+        const result = await Movies.getMovie(null, userMes, userName);
         const { retcode, localMovies } = result;
         if (retcode) replyContent = '啊哦，查询失败，请重试';
         if (!localMovies.length) {
@@ -54,7 +52,7 @@ class Wechat {
             return '[OMG]请输入正确格式！'
         const { retcode } = await Movies.customDel(null, userMes);
         switch(retcode) {
-            case 2:
+            case 0:
                 return '[OMG]已处理，请重新获取!';
             case 1:
                 return '[Doge]没有找到这个文件，请重新获取！';
@@ -82,25 +80,24 @@ class Wechat {
         const type = MsgType ? MsgType[0] : ''; 
         const isNotText = '【收到不支持的消息类型，暂无法显示】';
         if (userMes === isNotText || !userMes.trim() || type !== 'text') return;
-
+        // console.log('userMes==', userMes);
         let replyContent = '';
-        if (this.userInfoMap[userName] == userMes) {
-            replyContent = '已经在查询啦～请勿重复请求！';
-        } else {
-            const userMesHandleType = userMes.split('+');
-            switch (userMesHandleType[0]) {
-                case '补录':
-                    replyContent = this.__customAdd(userName, userMesHandleType[1]);
-                    break;
-                case '失效':
-                    replyContent = await this.__customDel(userMesHandleType[1]);
-                    break;
-                default:
-                    replyContent = await this.__sendMovie(userName, userMes);
-                    break;
-            }
+        // let openId = 'omt5Q1Tp3gc-_Lu7-ko2vGBae0FM';
+        const userMesHandleType = userMes.split('+');
+        switch (userMesHandleType[0]) {
+            case '补录':
+                replyContent = this.__customAdd(userName, userMesHandleType[1]);
+                break;
+            case '失效':
+                replyContent = await this.__customDel(userMesHandleType[1]);
+                break;
+            default: {
+                // 表示查找中
+                replyContent = await this.__sendMovie(userMes, userName);
+                break;
+            }  
         }
-        
+
         return `<xml>
                 <ToUserName><![CDATA[${FromUserName[0]}]]></ToUserName>
                 <FromUserName><![CDATA[${ToUserName[0]}]]></FromUserName>

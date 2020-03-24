@@ -45,13 +45,15 @@ exports.LETTERS = [
 exports.WECHAT_CONFIG = {
     appID: 'wx642da9106f4fbd07',
     appSecret: '713b0689af6154a5fefdb06ee7d52217',
-    token: 'laigedianying',
+    token: 'yingshibaba',
     appName: '来个电影',
-    replaceName: /新剧分享|爱电影分享|十点美剧|小宇看电影/
+    replaceName: /新剧分享|爱电影分享|shidianmeiju|xykmovie/
 };
-
+exports.HOLD_TIME = 500;
 exports.ENV = process.env.NODE_ENV;
 exports.IPS = [
     'http://116.114.19.211:443',
     'http://101.37.118.54:8888'
 ];
+
+exports.USER_REQ_MAP = {};

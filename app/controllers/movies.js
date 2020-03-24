@@ -2,7 +2,7 @@
 
 const mongoose =  require('mongoose');
 const Movies = mongoose.model('Movies');
-const { startCrawl, isValid, __crawlContent } = require('../service/crawl');
+const { startCrawl, __crawlContent } = require('../service/crawl');
 const {
     verify,
     shorturlinfo,
@@ -14,7 +14,7 @@ const {
     nowfsid,
     generatePWD
 } = require('../service/baidupan');
-const { WECHAT_CONFIG, URL } = require('../service/config');
+const { WECHAT_CONFIG, URL, HOLD_TIME, USER_REQ_MAP } = require('../service/config');
 const { replaceName, appName } = WECHAT_CONFIG;
 const { requestDouban, sleep } = require('../service/douban');
 
@@ -48,7 +48,7 @@ function __addMovie({
  */
 async function transferAndSave(crawlShareLinks, userSearch) {
     const sharefilelist = [], renamelist = [];
-
+    // console.log('DEBUG----这里是爬到的----', crawlShareLinks);
     // 转存前期工作
     await Promise.all(crawlShareLinks.map(async ({
         shareLink, name, desc, pwd: iPwd = 'LXXH'
@@ -79,6 +79,8 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         // 获取转存后的文件fsid
         let nowlistResult = await nowfsid(encodeURIComponent(server_filename));
         let { errno, list: nowList = [{}] } = nowlistResult;
+        // console.log('DEBUG----第一次转存----', nowlistResult);
+        
         // 获取重试逻辑
         if (errno) {
             let splitIdx = ~server_filename.indexOf('[ 微信公众号') 
@@ -88,7 +90,9 @@ async function transferAndSave(crawlShareLinks, userSearch) {
             let parse_name = server_filename.substring(0, splitIdx);
             nowlistResult = await nowfsid(encodeURIComponent(parse_name));
             nowList = nowlistResult.list || [{}];
+            // console.log('DEBUG----转存重试----', nowlistResult);
         };
+        
         const { fs_id: cur_fs_id, path: fs_path } =  nowList[0] || {};
         const pwd = generatePWD();
         if (!cur_fs_id) return;
@@ -105,7 +109,10 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         sharefilelist.push(movie);
         __addMovie(movie);
     }));
-
+    
+    // console.log('DEBUG----分享列表----', sharefilelist);
+    // console.log('DEBUG----重命名列表----', renamelist);
+    
     return { sharefilelist, renamelist };
 }
 
@@ -127,6 +134,8 @@ async function renameFile(renamelist) {
             }])
         });
         const { errno } = renameResult;
+        // console.log('DEBUG----第一次重命名----', renameResult);
+        
         // 加入重命名重试逻辑
         if (errno) {
             n_name = n_name.replace('微信公众号', 'wx公众号');
@@ -137,6 +146,7 @@ async function renameFile(renamelist) {
                     newname: n_name
                 }])
             });
+            // console.log('DEBUG----第二次重命名----', renameResult);
         }
         // 拿里面的文件
         const dirInfo = await dirlist(encodeURIComponent(list_f_dir));
@@ -162,34 +172,62 @@ async function renameFile(renamelist) {
  * @param {*} ctx 
  * @param {*} userMes 
  */
-async function getMovie(ctx, userMes) {
+async function getMovie(ctx, userMes, openId) {
     const keyword = userMes || ctx.request.query.keyword;
-    const wordReg = new RegExp(keyword, 'i')
-    let localMovies = await Movies.find({
-        $or: [
-            { name: wordReg },
-            { userSearch: { $in: [keyword] } }
-        ]
-    }).exec() || [];
+    const wordReg = new RegExp(keyword, 'i');
+    let localMovies = [];
 
-    if (!localMovies.length) {
-        const shareLinks = await startCrawl(keyword);
-        if (shareLinks.length) {
-            // 查询一下数据库有没有
-            const { name } = shareLinks[0];
-            localMovies = await Movies.find({  
-                name
-            }).exec() || [];
-            if (!localMovies.length) {
-                const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
-                localMovies = sharefilelist;
-                renameFile(renamelist);
-            } else {
-                __addUserSearch(name, keyword);
-            }
+    const __mainFn = async () => {
+        localMovies = await Movies.find({
+            $or: [
+                { name: wordReg },
+                { userSearch: { $in: [keyword] } }
+            ]
+        }).exec() || [];
+
+        if (!localMovies.length) {
+            // console.log('DEBUG----调用爬虫----');
+            const shareLinks = await startCrawl(keyword);
+            if (shareLinks.length) {
+                // 查询一下数据库有没有
+                const { name } = shareLinks[0];
+                localMovies = await Movies.find({  
+                    name
+                }).exec() || [];
+                if (!localMovies.length) {
+                    // console.log('DEBUG----转存----');
+                    const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
+                    localMovies = sharefilelist;
+                    // console.log('DEBUG----重命名----');
+                    renameFile(renamelist);
+                } else {
+                    __addUserSearch(name, keyword);
+                }
+            };
         };
-    };
-
+    }
+    
+    // 当前用户有未完成的请求
+    if (openId && USER_REQ_MAP[openId]) {
+        while (USER_REQ_MAP[openId]) {
+            await sleep(HOLD_TIME);
+            // console.log('DEBUG----等待 WAIT----');
+        }
+        // 再查一次
+        localMovies = await Movies.find({
+            $or: [
+                { name: wordReg },
+                { userSearch: { $in: [keyword] } }
+            ]
+        }).exec() || [];
+    } else if (openId && !USER_REQ_MAP[openId]) {
+        USER_REQ_MAP[openId] = 1;
+        await __mainFn();
+        if (openId && USER_REQ_MAP[openId]) delete USER_REQ_MAP[openId];
+    } else {
+        await __mainFn();
+    }
+    
     console.log(`!!!!! 获取${keyword}成功 !!!!!`);
     
     return {
