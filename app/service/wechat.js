@@ -27,7 +27,7 @@ class Wechat {
 
     async __sendMovie(userMes) {
         let replyContent = '';
-        const result = await Movies.getMovie(ctx, userMes);
+        const result = await Movies.getMovie(null, userMes);
         delete this.userInfoMap[userName];
         const { retcode, localMovies } = result;
         if (retcode) replyContent = '啊哦，查询失败，请重试';

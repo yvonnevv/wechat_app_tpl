@@ -71,7 +71,8 @@ async function transferAndSave(crawlShareLinks, userSearch) {
         const { shareid, uk } = shareInfoResult;
         const sharelistResult = await sharelist({shareid, shorturl: shortSurl, sekey: randsk});
         const { list = {} } = sharelistResult;
-        const { fs_id, server_filename } = list[0];
+        const { fs_id, server_filename } = list[0] || {};
+        if (!fs_id) return;
 
         // 要依次转存
         await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
