@@ -2,7 +2,7 @@
 
 const mongoose =  require('mongoose');
 const Movies = mongoose.model('Movies');
-const { startCrawl, __crawlContent } = require('../service/crawl');
+const { startCrawl, isValid, __crawlContent } = require('../service/crawl');
 const {
     verify,
     shorturlinfo,
@@ -18,8 +18,8 @@ const { WECHAT_CONFIG, URL } = require('../service/config');
 const { replaceName, appName } = WECHAT_CONFIG;
 const { requestDouban, sleep } = require('../service/douban');
 
-async function __deleteMovie(name) {
-    await Movies.remove({ name });
+async function __deleteMovie(shareUrl) {
+    await Movies.remove({ shareUrl });
 }
 
 function __addUserSearch(name, keyword) {
@@ -127,7 +127,7 @@ async function renameFile(renamelist) {
         const { errno } = renameResult;
         // 加入重命名重试逻辑
         if (errno) {
-            let n_name = n_name.replace('微信公众号', 'wx公众号');
+            n_name = n_name.replace('微信公众号', 'wx公众号');
             list_f_dir = list_f_dir.replace('微信公众号', 'wx公众号');
             await rename({
                 filelist: JSON.stringify([{
@@ -226,6 +226,38 @@ exports.autoGetMoives = async (ctx) => {
             console.log(`$$$$$ 任务完成 $$$$$`)
         }
         await sleep(50000);     
+    };
+}
+
+exports.customDel = async (ctx, userMes) => {
+    const shareUrl = userMes || ctx.request.body.shareUrl;
+    // 检测可用性
+    const sResult = await Movies.find({
+        shareUrl
+    });
+    if (!sResult.length) return { retcode: 1 };
+    const { name, password } = sResult[0];
+    const surlArr = shareUrl.split('/s/');
+    const surl = surlArr[1];
+    const shortSurl = surl.substring(1);
+    const verifyResult = await verify({
+        pwd: password,
+        surl: shortSurl
+    });
+
+    const { randsk } = verifyResult;
+    const { fcount } = await shorturlinfo({
+        shorturl: surl, spd: randsk
+    });
+
+    if (fcount) return { retcode: 2 };
+
+    __deleteMovie(shareUrl);
+    // 重新找一下
+    getMovie(ctx, name);
+
+    return {
+        retcode: 0
     };
 }
 

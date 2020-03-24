@@ -12,17 +12,7 @@ module.exports = function(){
 		const result = wechat.auth(ctx);
 		ctx.body = result;
 	});
-
-	router.post('/', async ctx => {
-		const result = await wechat.sendMes(ctx);
-		ctx.body = result;
-	})
-
-	router.post('/api/insert', async ctx => {
-		const result = await Movies.customInsert(ctx);
-		ctx.body = result;
-	})
-	  
+  
 	router.get('/api/movie', async ctx => {
 		const result  = await Movies.getMovie(ctx);
 		ctx.body = result;
@@ -47,6 +37,21 @@ module.exports = function(){
 		ctx.body = {
 			retcode: 0
 		};
+	});
+
+	router.post('/', async ctx => {
+		const result = await wechat.sendMes(ctx);
+		ctx.body = result;
+	});
+
+	router.post('/api/insert', async ctx => {
+		const result = await Movies.customInsert(ctx);
+		ctx.body = result;
+	});
+
+	router.post('/api/delete', async ctx => {
+		const result = await Movies.customDel(ctx);
+		ctx.body = result;
 	});
 
 	return router;
