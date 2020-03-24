@@ -4,8 +4,6 @@ const Router = require('koa-router')
 const Movies = require('../app/controllers/movies')
 const Wechat = require('../app/service/wechat');
 
-let nowTime = 0;
-
 module.exports = function(){
 	const router = new Router();
 	const wechat = new Wechat();

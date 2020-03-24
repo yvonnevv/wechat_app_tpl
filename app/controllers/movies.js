@@ -44,14 +44,14 @@ function __addMovie({
 /**
  * 转存
  * @param {*} crawlShareLinks 
- * @param {*} userSearch 
+ * @param {*} keyword 
  */
-async function transferAndSave(crawlShareLinks, userSearch) {
+async function transferAndSave(crawlShareLinks, uSearch) {
     const sharefilelist = [], renamelist = [];
     // console.log('DEBUG----这里是爬到的----', crawlShareLinks);
     // 转存前期工作
     await Promise.all(crawlShareLinks.map(async ({
-        shareLink, name, desc, pwd: iPwd = 'LXXH'
+        shareLink, name, desc, pwd: iPwd = 'LXXH', userSearch
     }) => {
         // 短链
         if (!shareLink) return;
@@ -103,7 +103,7 @@ async function transferAndSave(crawlShareLinks, userSearch) {
             shareUrl: shorturl,
             password: pwd,
             keyword: desc,
-            userSearch: [userSearch || name]
+            userSearch: userSearch || [uSearch || name]
         };
         renamelist.push({fs_id: cur_fs_id, fs_path, server_filename});
         sharefilelist.push(movie);
