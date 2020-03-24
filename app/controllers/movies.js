@@ -186,7 +186,7 @@ async function getMovie(ctx, userMes, openId) {
         }).exec() || [];
 
         if (!localMovies.length) {
-            // console.log('DEBUG----调用爬虫----');
+            console.log('DEBUG----调用爬虫----');
             const shareLinks = await startCrawl(keyword);
             if (shareLinks.length) {
                 // 查询一下数据库有没有
@@ -195,10 +195,10 @@ async function getMovie(ctx, userMes, openId) {
                     name
                 }).exec() || [];
                 if (!localMovies.length) {
-                    // console.log('DEBUG----转存----');
+                    console.log('DEBUG----转存----');
                     const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
                     localMovies = sharefilelist;
-                    // console.log('DEBUG----重命名----');
+                    console.log('DEBUG----重命名----');
                     renameFile(renamelist);
                 } else {
                     __addUserSearch(name, keyword);
@@ -211,7 +211,7 @@ async function getMovie(ctx, userMes, openId) {
     if (openId && USER_REQ_MAP[openId]) {
         while (USER_REQ_MAP[openId]) {
             await sleep(HOLD_TIME);
-            // console.log('DEBUG----等待 WAIT----');
+            console.log('DEBUG----重复等待----');
         }
         // 再查一次
         localMovies = await Movies.find({
