@@ -70,16 +70,10 @@ async function transferAndSave(crawlShareLinks, uSearch) {
 
         const { shareid, uk } = shareInfoResult;
         const sharelistResult = await sharelist({shareid, shorturl: shortSurl, sekey: randsk});
-<<<<<<< HEAD
-        const { errno: sErron, list = {} } = sharelistResult;
-        if (sErron) return;
-        const { fs_id, server_filename } = list[0];
-=======
         const { list = {} } = sharelistResult;
         const { fs_id, server_filename } = list[0] || {};
         if (!fs_id) return;
 
->>>>>>> d282f97109b6cae8438f63e15a6b7298fb76e363
         // 要依次转存
         await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
         // 获取转存后的文件fsid
