@@ -91,11 +91,11 @@ class Wechat {
             case '失效':
                 replyContent = await this.__customDel(userMesHandleType[1]);
                 break;
-            default: {
-                // 表示查找中
+            case '求片':
                 replyContent = await this.__sendMovie(userMes, userName);
                 break;
-            }  
+            default: 
+                replyContent = '你知道暗号吗[Doge]' 
         }
 
         return `<xml>
