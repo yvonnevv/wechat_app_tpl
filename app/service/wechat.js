@@ -80,20 +80,19 @@ class Wechat {
         const type = MsgType ? MsgType[0] : ''; 
         const isNotText = '【收到不支持的消息类型，暂无法显示】';
         if (userMes === isNotText || !userMes.trim() || type !== 'text') return;
-        // console.log('userMes==', userMes);
         let replyContent = '';
         // let openId = 'omt5Q1Tp3gc-_Lu7-ko2vGBae0FM';
-        let userMesHandleType = userMes.split('+')[0].substring(0,2);
-        const mesInfo = userMesHandleType[1].trim();
-        switch (userMesHandleType[0]) {
+        const userMesHandleType = userMes.split('+')[0].trim();
+        const userMesInfo = userMes.split('+')[1].trim();
+        switch (userMesHandleType) {
             case '补录':
-                replyContent = this.__customAdd(userName, mesInfo);
+                replyContent = this.__customAdd(userName, userMesInfo);
                 break;
             case '失效':
-                replyContent = await this.__customDel(mesInfo);
+                replyContent = await this.__customDel(userMesInfo);
                 break;
             case '求片':
-                replyContent = await this.__sendMovie(mesInfo, userName);
+                replyContent = await this.__sendMovie(userMesInfo, userName);
                 break;
             default: 
                 replyContent = '你知道暗号吗[Doge]' 
