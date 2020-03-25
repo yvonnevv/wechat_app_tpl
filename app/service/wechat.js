@@ -95,7 +95,7 @@ class Wechat {
                 replyContent = await this.__sendMovie(userMesInfo, userName);
                 break;
             default: 
-                replyContent = '你知道暗号吗[Doge]' 
+                replyContent = '点击菜单获取彩蛋～' 
         }
 
         return `<xml>
