@@ -88,7 +88,7 @@ const app = new Koa()
 
 app.use(logger())
 app.use(session(app))
-// app.use(xmlParser())
+app.use(xmlParser())
 app.use(bodyParser())
 
 
