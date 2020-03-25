@@ -70,9 +70,9 @@ async function transferAndSave(crawlShareLinks, userSearch) {
 
         const { shareid, uk } = shareInfoResult;
         const sharelistResult = await sharelist({shareid, shorturl: shortSurl, sekey: randsk});
-        const { list = {} } = sharelistResult;
+        const { errno: sErron, list = {} } = sharelistResult;
+        if (sErron) return;
         const { fs_id, server_filename } = list[0];
-
         // 要依次转存
         await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
         // 获取转存后的文件fsid
@@ -127,7 +127,7 @@ async function renameFile(renamelist) {
         const { errno } = renameResult;
         // 加入重命名重试逻辑
         if (errno) {
-            let n_name = n_name.replace('微信公众号', 'wx公众号');
+            n_name = n_name.replace('微信公众号', 'wx公众号');
             list_f_dir = list_f_dir.replace('微信公众号', 'wx公众号');
             await rename({
                 filelist: JSON.stringify([{
