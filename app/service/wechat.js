@@ -84,15 +84,16 @@ class Wechat {
         let replyContent = '';
         // let openId = 'omt5Q1Tp3gc-_Lu7-ko2vGBae0FM';
         let userMesHandleType = userMes.split('+')[0].substring(0,2);
+        const mesInfo = userMesHandleType[1].trim();
         switch (userMesHandleType[0]) {
             case '补录':
-                replyContent = this.__customAdd(userName, userMesHandleType[1]);
+                replyContent = this.__customAdd(userName, mesInfo);
                 break;
             case '失效':
-                replyContent = await this.__customDel(userMesHandleType[1]);
+                replyContent = await this.__customDel(mesInfo);
                 break;
             case '求片':
-                replyContent = await this.__sendMovie(userMes, userName);
+                replyContent = await this.__sendMovie(mesInfo, userName);
                 break;
             default: 
                 replyContent = '你知道暗号吗[Doge]' 
