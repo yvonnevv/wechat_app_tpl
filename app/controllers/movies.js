@@ -14,12 +14,12 @@ const {
     nowfsid,
     generatePWD
 } = require('../service/baidupan');
-const { WECHAT_CONFIG, URL } = require('../service/config');
+const { WECHAT_CONFIG, URL, HOLD_TIME, USER_REQ_MAP } = require('../service/config');
 const { replaceName, appName } = WECHAT_CONFIG;
 const { requestDouban, sleep } = require('../service/douban');
 
-async function __deleteMovie(name) {
-    await Movies.remove({ name });
+async function __deleteMovie(shareUrl) {
+    await Movies.remove({ shareUrl });
 }
 
 function __addUserSearch(name, keyword) {
@@ -44,14 +44,14 @@ function __addMovie({
 /**
  * 转存
  * @param {*} crawlShareLinks 
- * @param {*} userSearch 
+ * @param {*} keyword 
  */
-async function transferAndSave(crawlShareLinks, userSearch) {
+async function transferAndSave(crawlShareLinks, uSearch) {
     const sharefilelist = [], renamelist = [];
-
+    // console.log('DEBUG----这里是爬到的----', crawlShareLinks);
     // 转存前期工作
     await Promise.all(crawlShareLinks.map(async ({
-        shareLink, name, desc, pwd: iPwd = 'LXXH'
+        shareLink, name, desc, pwd: iPwd = 'LXXH', userSearch
     }) => {
         // 短链
         if (!shareLink) return;
@@ -70,14 +70,23 @@ async function transferAndSave(crawlShareLinks, userSearch) {
 
         const { shareid, uk } = shareInfoResult;
         const sharelistResult = await sharelist({shareid, shorturl: shortSurl, sekey: randsk});
+<<<<<<< HEAD
         const { errno: sErron, list = {} } = sharelistResult;
         if (sErron) return;
         const { fs_id, server_filename } = list[0];
+=======
+        const { list = {} } = sharelistResult;
+        const { fs_id, server_filename } = list[0] || {};
+        if (!fs_id) return;
+
+>>>>>>> d282f97109b6cae8438f63e15a6b7298fb76e363
         // 要依次转存
         await transfer({ shareid, from: uk, sekey: randsk, fsidlist: JSON.stringify([fs_id]) });
         // 获取转存后的文件fsid
         let nowlistResult = await nowfsid(encodeURIComponent(server_filename));
         let { errno, list: nowList = [{}] } = nowlistResult;
+        // console.log('DEBUG----第一次转存----', nowlistResult);
+        
         // 获取重试逻辑
         if (errno) {
             let splitIdx = ~server_filename.indexOf('[ 微信公众号') 
@@ -87,9 +96,12 @@ async function transferAndSave(crawlShareLinks, userSearch) {
             let parse_name = server_filename.substring(0, splitIdx);
             nowlistResult = await nowfsid(encodeURIComponent(parse_name));
             nowList = nowlistResult.list || [{}];
+            // console.log('DEBUG----转存重试----', nowlistResult);
         };
+        
         const { fs_id: cur_fs_id, path: fs_path } =  nowList[0] || {};
         const pwd = generatePWD();
+        if (!cur_fs_id) return;
         let shareResult = await newshare({fid_list: JSON.stringify([cur_fs_id]), pwd});
         const { shorturl } = shareResult;
         const movie = {
@@ -97,13 +109,16 @@ async function transferAndSave(crawlShareLinks, userSearch) {
             shareUrl: shorturl,
             password: pwd,
             keyword: desc,
-            userSearch: [userSearch || name]
+            userSearch: userSearch || [uSearch || name]
         };
         renamelist.push({fs_id: cur_fs_id, fs_path, server_filename});
         sharefilelist.push(movie);
         __addMovie(movie);
     }));
-
+    
+    // console.log('DEBUG----分享列表----', sharefilelist);
+    // console.log('DEBUG----重命名列表----', renamelist);
+    
     return { sharefilelist, renamelist };
 }
 
@@ -125,6 +140,8 @@ async function renameFile(renamelist) {
             }])
         });
         const { errno } = renameResult;
+        // console.log('DEBUG----第一次重命名----', renameResult);
+        
         // 加入重命名重试逻辑
         if (errno) {
             n_name = n_name.replace('微信公众号', 'wx公众号');
@@ -135,6 +152,7 @@ async function renameFile(renamelist) {
                     newname: n_name
                 }])
             });
+            // console.log('DEBUG----第二次重命名----', renameResult);
         }
         // 拿里面的文件
         const dirInfo = await dirlist(encodeURIComponent(list_f_dir));
@@ -160,34 +178,62 @@ async function renameFile(renamelist) {
  * @param {*} ctx 
  * @param {*} userMes 
  */
-async function getMovie(ctx, userMes) {
+async function getMovie(ctx, userMes, openId) {
     const keyword = userMes || ctx.request.query.keyword;
-    const wordReg = new RegExp(keyword, 'i')
-    let localMovies = await Movies.find({
-        $or: [
-            { name: wordReg },
-            { userSearch: { $in: [keyword] } }
-        ]
-    }).exec() || [];
+    const wordReg = new RegExp(keyword, 'i');
+    let localMovies = [];
 
-    if (!localMovies.length) {
-        const shareLinks = await startCrawl(keyword);
-        if (shareLinks.length) {
-            // 查询一下数据库有没有
-            const { name } = shareLinks[0];
-            localMovies = await Movies.find({  
-                name
-            }).exec() || [];
-            if (!localMovies.length) {
-                const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
-                localMovies = sharefilelist;
-                renameFile(renamelist);
-            } else {
-                __addUserSearch(name, keyword);
-            }
+    const __mainFn = async () => {
+        localMovies = await Movies.find({
+            $or: [
+                { name: wordReg },
+                { userSearch: { $in: [keyword] } }
+            ]
+        }).exec() || [];
+
+        if (!localMovies.length) {
+            // console.log('DEBUG----调用爬虫----');
+            const shareLinks = await startCrawl(keyword);
+            if (shareLinks.length) {
+                // 查询一下数据库有没有
+                const { name } = shareLinks[0];
+                localMovies = await Movies.find({  
+                    name
+                }).exec() || [];
+                if (!localMovies.length) {
+                    // console.log('DEBUG----转存----');
+                    const { sharefilelist, renamelist } = await transferAndSave(shareLinks, keyword);
+                    localMovies = sharefilelist;
+                    // console.log('DEBUG----重命名----');
+                    renameFile(renamelist);
+                } else {
+                    __addUserSearch(name, keyword);
+                }
+            };
         };
-    };
-
+    }
+    
+    // 当前用户有未完成的请求
+    if (openId && USER_REQ_MAP[openId]) {
+        while (USER_REQ_MAP[openId]) {
+            await sleep(HOLD_TIME);
+            // console.log('DEBUG----重复等待----');
+        }
+        // 再查一次
+        localMovies = await Movies.find({
+            $or: [
+                { name: wordReg },
+                { userSearch: { $in: [keyword] } }
+            ]
+        }).exec() || [];
+    } else if (openId && !USER_REQ_MAP[openId]) {
+        USER_REQ_MAP[openId] = 1;
+        await __mainFn();
+        if (openId && USER_REQ_MAP[openId]) delete USER_REQ_MAP[openId];
+    } else {
+        await __mainFn();
+    }
+    
     console.log(`!!!!! 获取${keyword}成功 !!!!!`);
     
     return {
@@ -203,8 +249,7 @@ async function getMovie(ctx, userMes) {
 exports.customInsert = async (ctx) => {
     const { insertDoc = [] } = ctx.request.body;
     const { sharefilelist, renamelist } = await transferAndSave(insertDoc);
-    console.log('sharefilelist==', sharefilelist);
-    
+
     renameFile(renamelist);
     return {
         retcode: 0,
@@ -226,6 +271,38 @@ exports.autoGetMoives = async (ctx) => {
             console.log(`$$$$$ 任务完成 $$$$$`)
         }
         await sleep(50000);     
+    };
+}
+
+exports.customDel = async (ctx, userMes) => {
+    const shareUrl = userMes || ctx.request.body.shareUrl;
+    // 检测可用性
+    const sResult = await Movies.find({
+        shareUrl
+    });
+    if (!sResult.length) return { retcode: 1 };
+    const { name, password } = sResult[0];
+    const surlArr = shareUrl.split('/s/');
+    const surl = surlArr[1];
+    const shortSurl = surl.substring(1);
+    const verifyResult = await verify({
+        pwd: password,
+        surl: shortSurl
+    });
+
+    const { randsk } = verifyResult;
+    const { fcount } = await shorturlinfo({
+        shorturl: surl, spd: randsk
+    });
+
+    if (fcount) return { retcode: 2 };
+
+    __deleteMovie(shareUrl);
+    // 重新找一下
+    // getMovie(ctx, name);
+
+    return {
+        retcode: 0
     };
 }
 

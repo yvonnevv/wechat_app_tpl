@@ -98,6 +98,17 @@ export async function startCrawl(keyword) {
     }
 }
 
+export async function isValid(url) {
+    const docs = await superagent
+        .get(url)
+        .set('User-Agent', userAgent);
+    const $ = cheerio.load(docs);
+    const inValidNode = $('.share-error-left');
+    console.log('inValidNode', docs, inValidNode.length);
+    
+    return !inValidNode.length;
+}
+
 exports.__crawlContent = __crawlContent;
 
 
