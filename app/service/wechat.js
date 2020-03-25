@@ -85,6 +85,9 @@ class Wechat {
         const userMesHandleType = userMes.split('+')[0].trim();
         const userMesInfo = userMes.split('+')[1] ? userMes.split('+')[1].trim() : userMes;
         switch (userMesHandleType) {
+            case '我要暗号':
+                replyContent = '回复：求片+片名。例如求片+阿凡达[Smart]';
+                break;
             case '补录':
                 replyContent = this.__customAdd(userName, userMesInfo);
                 break;
