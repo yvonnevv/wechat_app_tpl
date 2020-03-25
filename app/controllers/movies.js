@@ -293,7 +293,7 @@ exports.customDel = async (ctx, userMes) => {
 
     __deleteMovie(shareUrl);
     // 重新找一下
-    getMovie(ctx, name);
+    // getMovie(ctx, name);
 
     return {
         retcode: 0
