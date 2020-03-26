@@ -5,6 +5,7 @@ const {
 } = require('./config');
 const Movies = require('../controllers/movies');
 const Supplement = require('../controllers/supplement');
+const Recommend = require('../controllers/recommend');
 
 class Wechat {
     constructor() {
@@ -61,6 +62,17 @@ class Wechat {
         }
     }
 
+    async __randomRecommend(tag) {
+        const { 
+            retcode,
+            titleText,
+            summary,
+            tagText 
+        } = await Recommend.recommend(tag);
+        if (retcode) return '啊哦，该类目下没有推荐呢'
+        return `${titleText}（${tagText}）\n\n${summary}`
+    }
+
     /**
      * 自动回复消息
      * @param {*} ctx 
@@ -81,13 +93,9 @@ class Wechat {
         const isNotText = '【收到不支持的消息类型，暂无法显示】';
         if (userMes === isNotText || !userMes.trim() || type !== 'text') return;
         let replyContent = '';
-        // let openId = 'omt5Q1Tp3gc-_Lu7-ko2vGBae0FM';
         const userMesHandleType = userMes.split('+')[0].trim();
         const userMesInfo = userMes.split('+')[1] ? userMes.split('+')[1].trim() : userMes;
         switch (userMesHandleType) {
-            case '我要暗号':
-                replyContent = '回复：求片+片名。例如求片+阿凡达[Smart]';
-                break;
             case '补录':
                 replyContent = this.__customAdd(userName, userMesInfo);
                 break;
@@ -97,8 +105,14 @@ class Wechat {
             case '求片':
                 replyContent = await this.__sendMovie(userMesInfo, userName);
                 break;
-            default: 
-                replyContent = '回复：求片+片名。例如求片+阿凡达[Smart]' 
+            default: {
+                if (~userMesHandleType.indexOf('推荐')) {
+                    const tag = userMesHandleType.substring(2);
+                    replyContent = await this.__randomRecommend(tag);
+                } else {
+                    replyContent = '回复：求片+片名。例如求片+阿凡达[Smart](点击菜单查看更多操作)' 
+                }
+            }
         }
 
         return `<xml>
