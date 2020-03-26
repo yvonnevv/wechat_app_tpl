@@ -31,7 +31,7 @@ class Wechat {
         const { retcode, localMovies } = result;
         if (retcode) replyContent = '啊哦，查询失败，请重试';
         if (!localMovies.length) {
-            replyContent = '啊哦，没有找到你想要的内容呢';
+            replyContent = '啊哦，没有找到你想要的内容呢。可回复补录+片名，小编会尽快处理';
         } else {
             localMovies.forEach(movie => {
                 const { name, shareUrl, password } = movie;
@@ -84,36 +84,43 @@ class Wechat {
             MsgType,
             ToUserName,
             FromUserName,
-            Content
+            Content,
+            Event
         } = xml.xml;
 
         const userName = FromUserName[0];
         const userMes = Content ? Content[0] : '';
         const type = MsgType ? MsgType[0] : ''; 
         const isNotText = '【收到不支持的消息类型，暂无法显示】';
-        if (userMes === isNotText || !userMes.trim() || type !== 'text') return;
         let replyContent = '';
-        const userMesHandleType = userMes.split('+')[0].trim();
-        const userMesInfo = userMes.split('+')[1] ? userMes.split('+')[1].trim() : userMes;
-        switch (userMesHandleType) {
-            case '补录':
-                replyContent = this.__customAdd(userName, userMesInfo);
-                break;
-            case '失效':
-                replyContent = await this.__customDel(userMesInfo);
-                break;
-            case '求片':
-                replyContent = await this.__sendMovie(userMesInfo, userName);
-                break;
-            default: {
-                if (~userMesHandleType.indexOf('推荐')) {
-                    const tag = userMesHandleType.substring(2);
-                    replyContent = await this.__randomRecommend(tag);
-                } else {
-                    replyContent = '回复：求片+片名。例如求片+阿凡达[Smart](点击菜单查看更多操作)' 
+        // 关注
+        if (type === 'event' && Event[0] === 'subscribe') {
+            replyContent = '靴靴关注[Wow]！点击菜单查看更多操作哟~'
+        };
+        if (type === 'text') {
+            if (userMes === isNotText || !userMes.trim()) return;
+            const userMesHandleType = userMes.split('+')[0].trim();
+            const userMesInfo = userMes.split('+')[1] ? userMes.split('+')[1].trim() : userMes;
+            switch (userMesHandleType) {
+                case '补录':
+                    replyContent = this.__customAdd(userName, userMesInfo);
+                    break;
+                case '失效':
+                    replyContent = await this.__customDel(userMesInfo);
+                    break;
+                case '求片':
+                    replyContent = await this.__sendMovie(userMesInfo, userName);
+                    break;
+                default: {
+                    if (~userMesHandleType.indexOf('推荐')) {
+                        const tag = userMesHandleType.substring(2);
+                        replyContent = await this.__randomRecommend(tag);
+                    } else {
+                        replyContent = '回复：求片+片名。例如求片+阿凡达[Smart](点击菜单查看更多操作)' 
+                    }
                 }
             }
-        }
+        };
 
         return `<xml>
                 <ToUserName><![CDATA[${FromUserName[0]}]]></ToUserName>
