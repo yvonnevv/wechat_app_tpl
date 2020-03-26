@@ -120,7 +120,7 @@ class Wechat {
                         const tag = userMesHandleType.substring(2);
                         replyContent = await this.__randomRecommend(tag);
                     } else {
-                        replyContent = '回复：求片+片名。例如求片+阿凡达[Smart](点击菜单查看更多操作)' 
+                        replyContent = '回复：求片+片名。\n例如求片+阿凡达[Smart](点击菜单查看更多操作)\n然后请等待几秒哦~' 
                     }
                 }
             }
