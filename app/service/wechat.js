@@ -99,8 +99,12 @@ class Wechat {
         };
         if (type === 'text') {
             if (userMes === isNotText || !userMes.trim()) return;
-            const userMesHandleType = userMes.split('+')[0].trim();
-            const userMesInfo = userMes.split('+')[1] ? userMes.split('+')[1].trim() : userMes;
+            let plusFlag = '+';
+            if (~userMes.indexOf('＋')) {
+                plusFlag = '＋'
+            };
+            const userMesHandleType = userMes.split(plusFlag)[0].trim();
+            const userMesInfo = userMes.split(plusFlag)[1] ? userMes.split('+')[1].trim() : userMes;
             switch (userMesHandleType) {
                 case '补录':
                     replyContent = this.__customAdd(userName, userMesInfo);
