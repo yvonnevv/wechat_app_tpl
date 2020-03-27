@@ -99,8 +99,12 @@ class Wechat {
         };
         if (type === 'text') {
             if (userMes === isNotText || !userMes.trim()) return;
-            const userMesHandleType = userMes.split('+')[0].trim();
-            const userMesInfo = userMes.split('+')[1] ? userMes.split('+')[1].trim() : userMes;
+            let plusFlag = '+';
+            if (~userMes.indexOf('＋')) {
+                plusFlag = '＋'
+            };
+            const userMesHandleType = userMes.split(plusFlag)[0].trim();
+            const userMesInfo = userMes.split(plusFlag)[1] ? userMes.split(plusFlag)[1].trim() : userMes;
             switch (userMesHandleType) {
                 case '补录':
                     replyContent = this.__customAdd(userName, userMesInfo);
@@ -116,7 +120,7 @@ class Wechat {
                         const tag = userMesHandleType.substring(2);
                         replyContent = await this.__randomRecommend(tag);
                     } else {
-                        replyContent = '回复：求片+片名 即可获取。例如求片+阿凡达[Smart](注意加号别打错了，点击菜单查看更多操作)' 
+                        replyContent = '回复：求片+片名 即可获取。\n例如求片+阿凡达[Smart](点击菜单查看更多操作)\n然后请等待几秒哦~' 
                     }
                 }
             }
