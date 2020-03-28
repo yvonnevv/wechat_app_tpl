@@ -3,11 +3,11 @@
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const SupplementSchema = new Schema({
+const UserSchema = new Schema({
     userDesc: String,
     userName: String
 });
 
-const Supplement = mongoose.model('Supplement', SupplementSchema);
+const User = mongoose.model('User', UserSchema);
 
-module.exports = Supplement;
+module.exports = User;

@@ -1,5 +1,5 @@
 {
-  "name": "movies-server",
+  "name": "wechat-server",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
@@ -10,12 +10,12 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "movies",
+    "wechat",
     "koa",  
     "node",
     "mongodb"
   ],
-  "author": "Remixxx",
+  "author": "http://yvonnevv.github.io/",
   "license": "MIT",
   "dependencies": {
     "async-request": "^1.2.0",
