@@ -3,6 +3,8 @@
 const Router = require('koa-router')
 const Movies = require('../app/controllers/movies')
 const Wechat = require('../app/service/wechat');
+const fs = require('fs');
+const path = require('path');
 
 module.exports = function(){
 	const router = new Router();
@@ -52,6 +54,14 @@ module.exports = function(){
 	router.post('/api/delete', async ctx => {
 		const result = await Movies.customDel(ctx);
 		ctx.body = result;
+	});
+
+	/**
+	 * Page
+	 */
+	router.get('/page/insertttt', async ctx => {
+		ctx.type = 'text/html;charset=uft-8'
+		ctx.body = fs.readFileSync(path.resolve(__dirname, '../pages/index.html'));
 	});
 
 	return router;

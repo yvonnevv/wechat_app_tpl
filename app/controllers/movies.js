@@ -241,6 +241,8 @@ async function getMovie(ctx, userMes, openId) {
  * @param {*} ctx 
  */
 exports.customInsert = async (ctx) => {
+    console.log(ctx.request.body);
+    
     const { insertDoc = [] } = ctx.request.body;
     const { sharefilelist, renamelist } = await transferAndSave(insertDoc);
 
