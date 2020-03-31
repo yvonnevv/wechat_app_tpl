@@ -34,7 +34,7 @@ $ npm run dev
 
 # 最后安利一下自己公众号
 欢迎关注👏
-![](https://segmentfault.com/img/remote/1460000022183623)
+![1](https://segmentfault.com/img/remote/1460000022183623)
 
 
 
